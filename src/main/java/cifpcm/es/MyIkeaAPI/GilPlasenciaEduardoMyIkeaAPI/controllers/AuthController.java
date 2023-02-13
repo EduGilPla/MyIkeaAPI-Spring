@@ -2,23 +2,24 @@ package cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.controllers;
 
 
 import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.models.User;
+import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.security.AuthenticationRequest;
+import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.security.AuthenticationResponse;
+import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.security.RegisterRequest;
 import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.services.UserServiceDB;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
-@Controller
+@RestController
 public class AuthController {
   @Autowired
   UserServiceDB userService;
@@ -33,18 +34,12 @@ public class AuthController {
     return "/authentication/register";
   }
   @PostMapping("/register")
-  public String Register(@Valid @ModelAttribute("user") User newUser, BindingResult bindingResult, Model ViewData){
-    if(bindingResult.hasErrors()){
-      return "/authentication/register";
-    }
-    if(!userService.registerUser(newUser)){
-      String USER_ALREADY_EXISTS_ERROR = "El usuario " + newUser.getEmail() + " ya existe.";
-      ViewData.addAttribute(ErrorAttributeName,USER_ALREADY_EXISTS_ERROR);
-      return "/common/welcome";
-    }
-    String CORRECT_REGISTER_MESSAGE = "¡El usuario " + newUser.getEmail() + " se ha registrado correctamente!";
-    ViewData.addAttribute("registerCorrecto",CORRECT_REGISTER_MESSAGE);
-    return "/common/welcome";
+  public ResponseEntity<AuthenticationResponse> Register(@RequestBody RegisterRequest request){
+    return ResponseEntity.ok(userService.register(request));
+  }
+  @PostMapping("/authenticate")
+  public ResponseEntity<AuthenticationResponse> Register(@RequestBody AuthenticationRequest request){
+    return ResponseEntity.ok(userService.authenticate(request));
   }
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/users")

@@ -1,5 +1,7 @@
 package cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -42,9 +44,11 @@ public class Producto {
   private int product_stock;
   @ManyToMany(mappedBy = "productList",
       fetch = FetchType.EAGER)
+  @JsonIgnore
   private List<Cart> carts;
   @ManyToMany(mappedBy = "products",
       fetch = FetchType.EAGER)
+  @JsonIgnore
   private List<Order> orders;
   @Transient
   private int quantity = 1;

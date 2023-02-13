@@ -4,15 +4,23 @@ import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.interfaces.RoleService;
 import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.models.Role;
 import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.models.User;
 import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.services.UserServiceDB;
+import jakarta.servlet.Filter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,29 +34,31 @@ public class SecurityConfig {
   UserServiceDB userService;
   @Autowired
   RoleService roleService;
+  @Autowired
+  JwtAuthenticationFilter jwtAuthFilter;
+  @Autowired
+  AuthenticationProvider authenticationProvider;
+
   @Bean
   public static PasswordEncoder getEncoder(){return new BCryptPasswordEncoder();}
   @Bean
-  public SecurityFilterChain mainConfig(HttpSecurity http) throws RuntimeException{
-    try {
-      http.authorizeHttpRequests((authz) -> authz
-            .requestMatchers("/", "/login", "/register").permitAll()
-            .anyRequest().authenticated()
-      );
-      http.formLogin()
-            .loginPage("/login")
-            .loginProcessingUrl("/login")
-            .defaultSuccessUrl("/")
-            .permitAll();
-      http.logout()
-            .logoutUrl("/logout")
-            .logoutSuccessUrl("/");
-      http.userDetailsService(userService);
+  public SecurityFilterChain mainConfig(HttpSecurity http) throws Exception{
+      http
+          .csrf()
+          .disable()
+          .authorizeHttpRequests()
+          .requestMatchers("/authenticate","/register")
+          .permitAll()
+          .anyRequest()
+          .authenticated()
+          .and()
+          .sessionManagement()
+          .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+          .and()
+          .authenticationProvider(authenticationProvider)
+          .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
       return http.build();
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+
   }
   @Bean
   public void seedUsers(){

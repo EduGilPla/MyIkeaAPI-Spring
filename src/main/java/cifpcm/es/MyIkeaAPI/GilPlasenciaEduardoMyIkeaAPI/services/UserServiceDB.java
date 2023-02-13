@@ -4,8 +4,13 @@ import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.models.Role;
 import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.models.User;
 import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.repositories.RoleRepository;
 import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.repositories.UserRepository;
+import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.security.AuthenticationRequest;
+import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.security.AuthenticationResponse;
+import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.security.RegisterRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -28,19 +33,26 @@ public class UserServiceDB implements UserDetailsService {
   RoleRepository roleRepository;
   @Autowired
   PasswordEncoder passwordEncoder;
+  @Autowired
+  JwtService jwtService;
+  @Autowired
+  AuthenticationManager authenticationManager;
 
   public List<User> getUserList(){
     return userRepository.findAll();
   }
   @Override
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    Optional<User>User = userRepository.findByEmail(username);
+    Optional<User> User = userRepository.findByEmail(username);
     if(User.isEmpty())
-      throw new UsernameNotFoundException("Exception");
+      throw new UsernameNotFoundException("No se encontró el usuario");
     User foundUser = User.get();
-    return new org.springframework.security.core.userdetails.User(foundUser.getEmail(),
-                foundUser.getPassword(),
-                buildUserAuthority(foundUser.getRoles()));
+    return buildUserDetails(foundUser);
+  }
+  private UserDetails buildUserDetails(User user){
+    return new org.springframework.security.core.userdetails.User(user.getEmail(),
+        user.getPassword(),
+        buildUserAuthority(user.getRoles()));
   }
   public boolean registerUser(User userDto){
     if(emailExists(userDto.getEmail())){
@@ -93,5 +105,31 @@ public class UserServiceDB implements UserDetailsService {
     catch (Exception exception){
       throw exception;
     }
+  }
+
+  public AuthenticationResponse register(RegisterRequest request) {
+    User user = new User(request.getFirstName(), request.getLastName(), request.getEmail(), passwordEncoder.encode(request.getPassword()));
+    Optional<Role> roleQuery = roleRepository.findByName("ROLE_USER");
+    Role defaultRole = roleQuery.get();
+    user.setRoles(Arrays.asList(defaultRole));
+    userRepository.save(user);
+    var jwtToken = jwtService.generateToken(buildUserDetails(user));
+    return AuthenticationResponse.builder()
+        .token(jwtToken)
+        .build();
+  }
+
+  public AuthenticationResponse authenticate(AuthenticationRequest request) {
+    authenticationManager.authenticate(
+        new UsernamePasswordAuthenticationToken(
+            request.getEmail(),
+            request.getPassword()
+        )
+    );
+    User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+    var jwtToken = jwtService.generateToken(buildUserDetails(user));
+    return AuthenticationResponse.builder()
+        .token(jwtToken)
+        .build();
   }
 }
