@@ -7,6 +7,7 @@ import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.repositories.UserReposit
 import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.security.AuthenticationRequest;
 import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.security.AuthenticationResponse;
 import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.security.RegisterRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,6 +17,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -26,18 +28,13 @@ import java.util.Optional;
 
 @Primary
 @Service
+@RequiredArgsConstructor
 public class UserServiceDB implements UserDetailsService {
   @Autowired
   UserRepository userRepository;
   @Autowired
   RoleRepository roleRepository;
-  @Autowired
-  PasswordEncoder passwordEncoder;
-  @Autowired
-  JwtService jwtService;
-  @Autowired
-  AuthenticationManager authenticationManager;
-
+  private final PasswordEncoder passwordEncoder;
   public List<User> getUserList(){
     return userRepository.findAll();
   }
@@ -53,6 +50,13 @@ public class UserServiceDB implements UserDetailsService {
     return new org.springframework.security.core.userdetails.User(user.getEmail(),
         user.getPassword(),
         buildUserAuthority(user.getRoles()));
+  }
+  public List<GrantedAuthority> buildUserAuthority(List<Role> roles){
+    List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
+    for(Role role : roles){
+      grantedAuthorities.add(new SimpleGrantedAuthority(role.getName()));
+    }
+    return grantedAuthorities;
   }
   public boolean registerUser(User userDto){
     if(emailExists(userDto.getEmail())){
@@ -85,13 +89,7 @@ public class UserServiceDB implements UserDetailsService {
   public boolean emailExists(String email) {
     return userRepository.findByEmail(email).isPresent();
   }
-  public List<GrantedAuthority> buildUserAuthority(List<Role> roles){
-    List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
-    for(Role role : roles){
-      grantedAuthorities.add(new SimpleGrantedAuthority(role.getName()));
-    }
-    return grantedAuthorities;
-  }
+
   public Optional<User> findUserByEmail(String email) {
     return userRepository.findByEmail(email);
   }
@@ -105,31 +103,5 @@ public class UserServiceDB implements UserDetailsService {
     catch (Exception exception){
       throw exception;
     }
-  }
-
-  public AuthenticationResponse register(RegisterRequest request) {
-    User user = new User(request.getFirstName(), request.getLastName(), request.getEmail(), passwordEncoder.encode(request.getPassword()));
-    Optional<Role> roleQuery = roleRepository.findByName("ROLE_USER");
-    Role defaultRole = roleQuery.get();
-    user.setRoles(Arrays.asList(defaultRole));
-    userRepository.save(user);
-    var jwtToken = jwtService.generateToken(buildUserDetails(user));
-    return AuthenticationResponse.builder()
-        .token(jwtToken)
-        .build();
-  }
-
-  public AuthenticationResponse authenticate(AuthenticationRequest request) {
-    authenticationManager.authenticate(
-        new UsernamePasswordAuthenticationToken(
-            request.getEmail(),
-            request.getPassword()
-        )
-    );
-    User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
-    var jwtToken = jwtService.generateToken(buildUserDetails(user));
-    return AuthenticationResponse.builder()
-        .token(jwtToken)
-        .build();
   }
 }

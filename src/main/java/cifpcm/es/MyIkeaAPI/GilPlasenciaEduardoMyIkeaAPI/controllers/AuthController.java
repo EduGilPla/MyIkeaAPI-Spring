@@ -5,6 +5,7 @@ import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.models.User;
 import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.security.AuthenticationRequest;
 import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.security.AuthenticationResponse;
 import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.security.RegisterRequest;
+import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.services.AuthenticationService;
 import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.services.UserServiceDB;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,8 @@ import java.util.Optional;
 public class AuthController {
   @Autowired
   UserServiceDB userService;
+  @Autowired
+  AuthenticationService authenticationService;
   private final String ErrorAttributeName = "error";
   @GetMapping("/login")
   public String Login(){
@@ -35,11 +38,11 @@ public class AuthController {
   }
   @PostMapping("/register")
   public ResponseEntity<AuthenticationResponse> Register(@RequestBody RegisterRequest request){
-    return ResponseEntity.ok(userService.register(request));
+    return ResponseEntity.ok(authenticationService.register(request));
   }
   @PostMapping("/authenticate")
   public ResponseEntity<AuthenticationResponse> Register(@RequestBody AuthenticationRequest request){
-    return ResponseEntity.ok(userService.authenticate(request));
+    return ResponseEntity.ok(authenticationService.authenticate(request));
   }
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/users")

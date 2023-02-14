@@ -1,10 +1,12 @@
 package cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.services;
 
+import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.models.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -34,12 +36,13 @@ public class JwtService {
       Map<String, Object> extraClaims,
       UserDetails userDetails
   ){
+    extraClaims.put("role",userDetails.getAuthorities());
     return Jwts
         .builder()
         .setClaims(extraClaims)
         .setSubject(userDetails.getUsername())
         .setIssuedAt(new Date(System.currentTimeMillis()))
-        .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 2))
+        .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 2))
         .signWith(getSignInKey(), SignatureAlgorithm.HS256)
         .compact();
   }
