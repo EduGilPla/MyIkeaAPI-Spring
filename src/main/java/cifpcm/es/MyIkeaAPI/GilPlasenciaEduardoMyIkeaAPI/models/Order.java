@@ -1,5 +1,7 @@
 package cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,6 +23,7 @@ public class Order {
   private int id;
   @ManyToOne
   @JoinColumn(name = "user_id")
+  @JsonIgnore
   private User buyer;
 
   @ManyToMany(cascade = {CascadeType.DETACH},fetch = FetchType.EAGER)
