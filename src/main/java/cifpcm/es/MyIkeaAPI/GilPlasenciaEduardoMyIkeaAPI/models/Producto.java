@@ -50,10 +50,4 @@ public class Producto {
       fetch = FetchType.EAGER)
   @JsonIgnore
   private List<Order> orders;
-  @Transient
-  private int quantity = 1;
-
-  public void plusOne(){
-    quantity++;
-  }
 }

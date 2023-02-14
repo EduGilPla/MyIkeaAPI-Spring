@@ -26,7 +26,6 @@ public class CartController {
   UserServiceDB userService;
   @Autowired
   ProductoService productoService;
-  private final String ErrorAttributeName = "error";
   @PreAuthorize("hasAuthority('ROLE_USER')")
   @GetMapping("/addToCart/{id}")
   public ResponseEntity<Producto> addToCart(@PathVariable String id, Authentication authentication){
@@ -63,28 +62,17 @@ public class CartController {
     userService.saveUserCart(user);
     return new ResponseEntity<>(product,HttpStatus.ACCEPTED);
   }
+  @PreAuthorize("hasAuthority('ROLE_USER')")
   @GetMapping("/customer/cart")
-  public String showCart(Authentication authentication, Model ViewData){
+  public ResponseEntity<List<Producto>> showCart(Authentication authentication){
     Optional<User> userQuery = userService.findUserByEmail(authentication.getName());
     if (userQuery.isEmpty()){
-      String USER_NOT_FOUND_ERROR = "No se ha podido mostrar el carrito. (Usuario no identificado)";
-      ViewData.addAttribute(ErrorAttributeName,USER_NOT_FOUND_ERROR);
-      return "/products/list";
+      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }
     User user = userQuery.get();
     Cart cart = user.getCart();
     List<Producto> cartList = cart.getProductList();
-    List<Producto> noRepetitionProductList = new ArrayList<>();
-    int cartTotal = 0;
-    for(Producto product : cartList){
-      cartTotal += product.getProduct_price();
-      if(noRepetitionProductList.contains(product))
-        product.plusOne();
-      else
-        noRepetitionProductList.add(product);
-    }
-    ViewData.addAttribute("totalPrice", cartTotal);
-    ViewData.addAttribute("cart",noRepetitionProductList);
-    return "/customer/cart";
+
+    return new ResponseEntity<>(cartList,HttpStatus.OK);
   }
 }
