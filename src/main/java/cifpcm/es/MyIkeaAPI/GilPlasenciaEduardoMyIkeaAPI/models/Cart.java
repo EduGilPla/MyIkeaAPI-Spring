@@ -1,5 +1,6 @@
 package cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,6 +22,7 @@ public class Cart {
   @OneToOne
   @MapsId
   @JoinColumn(name = "user_id")
+  @JsonIgnore
   private User owner;
   @ManyToMany(cascade = {CascadeType.ALL},fetch = FetchType.EAGER)
   @JoinTable(

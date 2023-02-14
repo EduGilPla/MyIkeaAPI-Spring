@@ -1,5 +1,6 @@
 package cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.List;
@@ -12,6 +13,7 @@ public class Role {
     private String name;
     @ManyToMany(mappedBy = "roles",
         fetch = FetchType.EAGER)
+    @JsonIgnore
     private List<User> users;
 
     public Role(){}

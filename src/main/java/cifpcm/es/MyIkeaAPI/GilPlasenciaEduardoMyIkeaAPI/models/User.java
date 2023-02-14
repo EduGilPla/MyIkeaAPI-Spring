@@ -45,7 +45,7 @@ public class User {
     @PrimaryKeyJoinColumn
     private Cart cart;
     @OneToMany(mappedBy = "buyer",
-        cascade = CascadeType.MERGE,
+        cascade = CascadeType.ALL,
         orphanRemoval = true)
     private List<Order> orders;
 

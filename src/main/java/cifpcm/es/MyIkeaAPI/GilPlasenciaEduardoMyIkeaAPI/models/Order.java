@@ -25,7 +25,6 @@ public class Order {
   @JoinColumn(name = "user_id")
   @JsonIgnore
   private User buyer;
-
   @ManyToMany(cascade = {CascadeType.DETACH},fetch = FetchType.EAGER)
   @JoinTable(
       name = "ORDER_PRODUCT",

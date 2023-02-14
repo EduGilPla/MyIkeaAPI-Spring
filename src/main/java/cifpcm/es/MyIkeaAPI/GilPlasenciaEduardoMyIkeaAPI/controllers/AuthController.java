@@ -9,6 +9,7 @@ import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.services.AuthenticationS
 import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.services.UserServiceDB;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -27,15 +28,6 @@ public class AuthController {
   @Autowired
   AuthenticationService authenticationService;
   private final String ErrorAttributeName = "error";
-  @GetMapping("/login")
-  public String Login(){
-    return "/authentication/login";
-  }
-  @GetMapping("/register")
-  public String Register(Model ViewData){
-    ViewData.addAttribute("user", new User());
-    return "/authentication/register";
-  }
   @PostMapping("/register")
   public ResponseEntity<AuthenticationResponse> Register(@RequestBody RegisterRequest request){
     return ResponseEntity.ok(authenticationService.register(request));
@@ -46,41 +38,30 @@ public class AuthController {
   }
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/users")
-  public String ListUsers(Model ViewData, Authentication authentication){
+  public ResponseEntity<List<User>> ListUsers(Model ViewData, Authentication authentication){
     List<User> userList = userService.getUserList();
     Optional<User> currentAdminUser = userService.findUserByEmail(authentication.getName());
     userList.remove(currentAdminUser.get());
-    ViewData.addAttribute("userList",userList);
-    return "/authentication/users";
+    return new ResponseEntity<>(userList, HttpStatus.OK);
   }
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/users/delete/{id}")
-  public String deleteUser(@PathVariable String id, Authentication authentication, Model ViewData){
+  public ResponseEntity<User> deleteUser(@PathVariable String id, Authentication authentication, Model ViewData){
     Optional<User> deleteQuery = userService.findUserById(Integer.parseInt(id));
     User currentAdminUser = userService.findUserByEmail(authentication.getName()).get();
-    List<User> userList = userService.getUserList();
     if(deleteQuery.isEmpty()){
-      String USER_NOT_FOUND_ERROR = "El usuario con id " + id + "no existe en la base de datos.";
-      userList.remove(currentAdminUser);
-      ViewData.addAttribute("userList",userList);
-      ViewData.addAttribute(ErrorAttributeName,USER_NOT_FOUND_ERROR);
-      return "/authentication/users";
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
     User userToDelete = deleteQuery.get();
     if(userToDelete.getEmail() == currentAdminUser.getEmail()){
-      String CANT_DELETE_YOUR_USER_ERROR = "El usuario con id " + id + " es el administrador loggeado actualmente. No se puede eliminar.";
-      userList.remove(currentAdminUser);
-      ViewData.addAttribute("userList",userList);
-      ViewData.addAttribute(ErrorAttributeName,CANT_DELETE_YOUR_USER_ERROR);
-      return "/authentication/users";
+      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }
     try {
       userService.deleteUser(userToDelete);
-      return "redirect:/users";
+      return new ResponseEntity<>(userToDelete,HttpStatus.OK);
     }
     catch (Exception exception){
-      ViewData.addAttribute(ErrorAttributeName,exception.getMessage());
-      return "/authentication/users";
+      return new ResponseEntity<>(userToDelete,HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

@@ -23,7 +23,6 @@ import java.util.Optional;
 public class OrderController {
   @Autowired
   UserServiceDB userService;
-  private final String ErrorAttributeName = "error";
   @PreAuthorize("hasAuthority('ROLE_USER')")
   @GetMapping("/order")
   public ResponseEntity<Order> placeOrder(Authentication authentication){
