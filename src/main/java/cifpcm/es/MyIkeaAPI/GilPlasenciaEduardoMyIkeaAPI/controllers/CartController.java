@@ -6,6 +6,8 @@ import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.models.Producto;
 import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.models.User;
 import cifpcm.es.MyIkeaAPI.GilPlasenciaEduardoMyIkeaAPI.services.UserServiceDB;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.ui.Model;
@@ -25,49 +27,41 @@ public class CartController {
   @Autowired
   ProductoService productoService;
   private final String ErrorAttributeName = "error";
+  @PreAuthorize("hasAuthority('ROLE_USER')")
   @GetMapping("/addToCart/{id}")
-  public String addToCart(@PathVariable String id, Authentication authentication, Model ViewData, RedirectAttributes redirectAttributes){
+  public ResponseEntity<Producto> addToCart(@PathVariable String id, Authentication authentication){
     Optional<User> userQuery = userService.findUserByEmail(authentication.getName());
     if (userQuery.isEmpty()){
-      String USER_NOT_FOUND_ERROR = "No se ha podido añadir el objeto al carrito. (Usuario no identificado)";
-      ViewData.addAttribute(ErrorAttributeName,USER_NOT_FOUND_ERROR);
-      return "/products/list";
+      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }
     User user = userQuery.get();
     Optional<Producto> productQuery = productoService.findProduct(Integer.parseInt(id));
     if(productQuery.isEmpty()){
-      String PRODUCT_NOT_FOUND_ERROR = "No se ha podido añadir el objeto al carrito. (El producto con id: " + id + " no existe)";
-      ViewData.addAttribute(ErrorAttributeName,PRODUCT_NOT_FOUND_ERROR);
-      return "/products/list";
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
     Producto product = productQuery.get();
     Cart userCart = userQuery.get().getCart();
     userCart.addProduct(product);
     userService.saveUserCart(user);
-
-    redirectAttributes.addAttribute("product",product.getProduct_name() + " añadido al carrito");
-    return "redirect:/products";
+    return new ResponseEntity<>(product,HttpStatus.ACCEPTED);
   }
+  @PreAuthorize("hasAuthority('ROLE_USER')")
   @GetMapping("/removeFromCart/{id}")
-  public String removeFromCart(@PathVariable String id, Authentication authentication, Model ViewData){
+  public ResponseEntity<Producto> removeFromCart(@PathVariable String id, Authentication authentication){
     Optional<User> userQuery = userService.findUserByEmail(authentication.getName());
     if (userQuery.isEmpty()){
-      String USER_NOT_FOUND_ERROR = "No se ha podido eliminar el objeto del carrito. (Usuario no identificado)";
-      ViewData.addAttribute(ErrorAttributeName,USER_NOT_FOUND_ERROR);
-      return "/products/list";
+      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }
     User user = userQuery.get();
     Optional<Producto> productQuery = productoService.findProduct(Integer.parseInt(id));
     if(productQuery.isEmpty()){
-      String PRODUCT_NOT_FOUND_ERROR = "No se ha podido eliminar el objeto del carrito. (El producto con id: " + id + " no existe)";
-      ViewData.addAttribute(ErrorAttributeName,PRODUCT_NOT_FOUND_ERROR);
-      return "/products/list";
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
     Producto product = productQuery.get();
     Cart userCart = userQuery.get().getCart();
     userCart.removeProduct(product);
     userService.saveUserCart(user);
-    return "redirect:/customer/cart";
+    return new ResponseEntity<>(product,HttpStatus.ACCEPTED);
   }
   @GetMapping("/customer/cart")
   public String showCart(Authentication authentication, Model ViewData){
