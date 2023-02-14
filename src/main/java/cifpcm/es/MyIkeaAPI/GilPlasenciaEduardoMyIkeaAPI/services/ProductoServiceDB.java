@@ -20,7 +20,7 @@ public class ProductoServiceDB implements ProductoService {
   public List<Producto> getProductList(){ return productoRepository.findAll();}
 
   @Override
-  public boolean addProduct(Producto newProduct){
+  public boolean saveProduct(Producto newProduct){
     try{
       productoRepository.save(newProduct);
       return OPERATION_SUCCESS;
@@ -30,7 +30,6 @@ public class ProductoServiceDB implements ProductoService {
       return OPERATION_FAILED;
     }
   }
-
   @Override
   public boolean deleteProduct(int id) {
     try {
@@ -42,19 +41,6 @@ public class ProductoServiceDB implements ProductoService {
       return OPERATION_FAILED;
     }
   }
-
-  @Override
-  public boolean updateProduct(Producto toUpdate) {
-    try{
-      productoRepository.save(toUpdate);
-      return OPERATION_SUCCESS;
-    }
-    catch (Exception exception){
-      System.out.println(exception);
-      return OPERATION_FAILED;
-    }
-  }
-
   @Override
   public Optional<Producto> findProduct(int id) { return productoRepository.findById(id); }
 }
