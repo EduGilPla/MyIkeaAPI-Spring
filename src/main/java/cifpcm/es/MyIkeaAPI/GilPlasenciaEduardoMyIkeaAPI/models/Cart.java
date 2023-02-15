@@ -24,7 +24,7 @@ public class Cart {
   @JoinColumn(name = "user_id")
   @JsonIgnore
   private User owner;
-  @ManyToMany(cascade = {CascadeType.ALL},fetch = FetchType.EAGER)
+  @ManyToMany(cascade = {CascadeType.DETACH},fetch = FetchType.EAGER)
   @JoinTable(
       name = "CART_PRODUCT",
       joinColumns = { @JoinColumn(name = "cart_id")},

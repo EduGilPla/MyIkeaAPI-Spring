@@ -27,13 +27,12 @@ public class AuthController {
   UserServiceDB userService;
   @Autowired
   AuthenticationService authenticationService;
-  private final String ErrorAttributeName = "error";
   @PostMapping("/register")
   public ResponseEntity<AuthenticationResponse> Register(@RequestBody RegisterRequest request){
     return ResponseEntity.ok(authenticationService.register(request));
   }
   @PostMapping("/authenticate")
-  public ResponseEntity<AuthenticationResponse> Register(@RequestBody AuthenticationRequest request){
+  public ResponseEntity<AuthenticationResponse> Authenticate(@RequestBody AuthenticationRequest request){
     return ResponseEntity.ok(authenticationService.authenticate(request));
   }
   @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -46,7 +45,7 @@ public class AuthController {
   }
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/users/delete/{id}")
-  public ResponseEntity<User> deleteUser(@PathVariable String id, Authentication authentication, Model ViewData){
+  public ResponseEntity<User> deleteUser(@PathVariable String id, Authentication authentication){
     Optional<User> deleteQuery = userService.findUserById(Integer.parseInt(id));
     User currentAdminUser = userService.findUserByEmail(authentication.getName()).get();
     if(deleteQuery.isEmpty()){
